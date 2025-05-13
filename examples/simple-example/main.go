@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/UserLeeZJ/shell-task/scheduler"
+	"shell-task/scheduler"
 )
 
 func main() {
