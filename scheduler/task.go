@@ -3,6 +3,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 )
@@ -104,8 +105,24 @@ func (t *Task) Run() {
 				var err error
 				for attempt := 0; attempt <= t.retryTimes; attempt++ {
 					start := time.Now()
-					err = t.job(t.ctx)
+
+					// 创建任务执行上下文，如果设置了超时，则使用带超时的上下文
+					jobCtx := t.ctx
+					var cancel context.CancelFunc
+					if t.timeout > 0 {
+						jobCtx, cancel = context.WithTimeout(t.ctx, t.timeout)
+						defer cancel()
+					}
+
+					// 使用可能带有超时的上下文执行任务
+					err = t.job(jobCtx)
 					duration := time.Since(start)
+
+					// 检查是否因为超时而取消
+					if jobCtx.Err() == context.DeadlineExceeded {
+						t.logger("[%s] Task timed out after %v", t.name, t.timeout)
+						err = fmt.Errorf("task timed out after %v: %w", t.timeout, jobCtx.Err())
+					}
 
 					result := JobResult{
 						Name:     t.name,

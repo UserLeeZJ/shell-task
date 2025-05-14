@@ -153,6 +153,28 @@ t := task.New(
 )
 ```
 
+### 任务超时控制
+
+```go
+t := task.New(
+    task.WithName("超时任务"),
+    task.WithJob(func(ctx context.Context) error {
+        // 长时间运行的任务
+        select {
+        case <-time.After(5 * time.Second): // 任务需要5秒完成
+            return nil
+        case <-ctx.Done():
+            // 如果上下文被取消（超时或手动取消）
+            return ctx.Err()
+        }
+    }),
+    task.WithTimeout(2*time.Second), // 设置2秒超时
+    task.WithErrorHandler(func(err error) {
+        log.Printf("处理超时错误: %v", err)
+    }),
+)
+```
+
 更多示例请查看 [examples](./examples) 目录。
 
 ## 构建和测试
