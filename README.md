@@ -109,7 +109,6 @@ Shell-Task 提供了多种配置选项，可以根据需要组合使用：
 | `WithRepeat` | 设置任务以固定间隔重复执行 |
 | `WithMaxRuns` | 设置最大运行次数 |
 | `WithRetry` | 设置失败后重试次数 |
-| `WithParallelism` | 设置并发执行数量 |
 | `WithLogger` | 自定义日志记录器 |
 | `WithRecover` | 添加 panic 恢复钩子 |
 | `WithStartupDelay` | 设置延迟启动时间 |

@@ -48,12 +48,7 @@ func WithRetry(n int) TaskOption {
 	}
 }
 
-// WithParallelism 并发执行多个任务（暂不实现并发控制，仅保留字段）
-func WithParallelism(n int) TaskOption {
-	return func(t *Task) {
-		t.parallelism = n
-	}
-}
+// 移除 WithParallelism 选项
 
 // WithLogger 自定义日志记录器
 func WithLogger(logger Logger) TaskOption {
@@ -125,30 +120,4 @@ func WithPriority(priority Priority) TaskOption {
 	}
 }
 
-// WithResourceLimits 设置任务资源限制
-func WithResourceLimits(limits ResourceLimits) TaskOption {
-	return func(t *Task) {
-		t.resources = limits
-	}
-}
-
-// WithMaxCPU 设置任务CPU使用限制
-func WithMaxCPU(maxCPU int) TaskOption {
-	return func(t *Task) {
-		t.resources.MaxCPU = maxCPU
-	}
-}
-
-// WithMaxMemory 设置任务内存使用限制
-func WithMaxMemory(maxMemory int) TaskOption {
-	return func(t *Task) {
-		t.resources.MaxMemory = maxMemory
-	}
-}
-
-// WithMaxExecutionTime 设置任务最大执行时间
-func WithMaxExecutionTime(maxTime time.Duration) TaskOption {
-	return func(t *Task) {
-		t.resources.MaxTime = maxTime
-	}
-}
+// 移除资源限制相关的选项函数

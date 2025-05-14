@@ -22,7 +22,7 @@
 - [并发控制](#并发控制)
   - [使用工作池](#使用工作池)
   - [任务优先级](#任务优先级)
-  - [资源限制](#资源限制)
+
 - [实际应用](#实际应用)
   - [文件处理](#文件处理)
   - [网络请求](#网络请求)
@@ -292,7 +292,7 @@ t := task.New(
         return nil
     }),
     task.WithMetricCollector(func(res task.JobResult) {
-        log.Printf("任务 '%s' 耗时 %v, 成功: %t", 
+        log.Printf("任务 '%s' 耗时 %v, 成功: %t",
             res.Name, res.Duration, res.Success)
     }),
 )
@@ -401,7 +401,7 @@ for i := 1; i <= 10; i++ {
             return nil
         }),
     )
-    
+
     // 提交任务到工作池
     pool.Submit(t)
 }
@@ -445,33 +445,6 @@ pool.Submit(lowPriorityTask)
 pool.Submit(highPriorityTask) // 会优先执行
 ```
 
-### 资源限制
-
-使用 `WithResourceLimits` 选项可以设置任务的资源限制：
-
-```go
-t := task.New(
-    task.WithName("资源受限任务"),
-    task.WithJob(func(ctx context.Context) error {
-        log.Println("执行资源密集型任务")
-        // 模拟资源密集型操作
-        time.Sleep(3 * time.Second)
-        return nil
-    }),
-    task.WithResourceLimits(task.ResourceLimits{
-        MaxCPU:    50,           // 最多使用50%的CPU
-        MaxMemory: 1024,         // 最多使用1GB内存
-        MaxTime:   5*time.Second, // 最多运行5秒
-    }),
-)
-
-// 启动任务
-t.Run()
-
-// 等待任务完成
-time.Sleep(10 * time.Second)
-```
-
 ## 实际应用
 
 ### 文件处理
@@ -488,7 +461,7 @@ t := task.New(
             return err
         }
         defer file.Close()
-        
+
         // 处理文件内容
         scanner := bufio.NewScanner(file)
         for scanner.Scan() {
@@ -502,7 +475,7 @@ t := task.New(
                 log.Println("处理行:", line)
             }
         }
-        
+
         return scanner.Err()
     }),
     task.WithErrorHandler(func(err error) {
@@ -530,7 +503,7 @@ t := task.New(
         if err != nil {
             return err
         }
-        
+
         // 发送请求
         client := &http.Client{}
         resp, err := client.Do(req)
@@ -538,18 +511,18 @@ t := task.New(
             return err
         }
         defer resp.Body.Close()
-        
+
         // 处理响应
         if resp.StatusCode != http.StatusOK {
             return fmt.Errorf("请求失败: %s", resp.Status)
         }
-        
+
         // 读取响应内容
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
             return err
         }
-        
+
         log.Printf("响应内容: %s", body)
         return nil
     }),
@@ -578,19 +551,19 @@ t := task.New(
             return err
         }
         defer db.Close()
-        
+
         // 设置上下文
         db.SetConnMaxLifetime(time.Minute * 3)
         db.SetMaxOpenConns(10)
         db.SetMaxIdleConns(10)
-        
+
         // 执行查询
         rows, err := db.QueryContext(ctx, "SELECT id, name FROM users LIMIT 10")
         if err != nil {
             return err
         }
         defer rows.Close()
-        
+
         // 处理结果
         for rows.Next() {
             // 检查是否已取消
@@ -607,7 +580,7 @@ t := task.New(
                 log.Printf("用户: %d, %s", id, name)
             }
         }
-        
+
         return rows.Err()
     }),
     task.WithErrorHandler(func(err error) {

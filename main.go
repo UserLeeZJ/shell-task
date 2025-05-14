@@ -21,8 +21,7 @@ type Logger = scheduler.Logger
 // Priority 定义任务优先级
 type Priority = scheduler.Priority
 
-// ResourceLimits 定义任务资源限制
-type ResourceLimits = scheduler.ResourceLimits
+// 移除 ResourceLimits 类型
 
 // 预定义优先级常量
 const (
@@ -59,7 +58,6 @@ var (
 	WithRepeat          = scheduler.WithRepeat
 	WithMaxRuns         = scheduler.WithMaxRuns
 	WithRetry           = scheduler.WithRetry
-	WithParallelism     = scheduler.WithParallelism
 	WithLogger          = scheduler.WithLogger
 	WithLoggerFunc      = scheduler.WithLoggerFunc
 	WithRecover         = scheduler.WithRecover
@@ -70,10 +68,6 @@ var (
 	WithCancelOnFailure = scheduler.WithCancelOnFailure
 	WithMetricCollector = scheduler.WithMetricCollector
 
-	// 优先级和资源限制选项
-	WithPriority         = scheduler.WithPriority
-	WithResourceLimits   = scheduler.WithResourceLimits
-	WithMaxCPU           = scheduler.WithMaxCPU
-	WithMaxMemory        = scheduler.WithMaxMemory
-	WithMaxExecutionTime = scheduler.WithMaxExecutionTime
+	// 优先级选项
+	WithPriority = scheduler.WithPriority
 )

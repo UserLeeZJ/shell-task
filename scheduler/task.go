@@ -34,12 +34,7 @@ const (
 	PriorityHigh   Priority = 10
 )
 
-// ResourceLimits 定义任务资源限制
-type ResourceLimits struct {
-	MaxCPU    int           // CPU 使用限制（百分比，0-100）
-	MaxMemory int           // 内存使用限制（MB，0表示不限制）
-	MaxTime   time.Duration // 最大执行时间（0表示不限制）
-}
+// 移除 ResourceLimits 结构体
 
 // Task 表示一个可配置的任务
 type Task struct {
@@ -49,7 +44,6 @@ type Task struct {
 	interval        time.Duration
 	maxRuns         int
 	retryTimes      int
-	parallelism     int
 	startupDelay    time.Duration
 	preHook         func()
 	postHook        func()
@@ -58,8 +52,7 @@ type Task struct {
 	logger          Logger
 	recoverHook     func(any)
 	metricCollector func(JobResult)
-	priority        Priority       // 任务优先级
-	resources       ResourceLimits // 资源限制
+	priority        Priority // 任务优先级
 
 	ctx        context.Context
 	cancelFunc context.CancelFunc
@@ -76,11 +69,6 @@ func NewTask(opts ...TaskOption) *Task {
 		// 默认值
 		logger:   defaultLoggerInstance,
 		priority: PriorityNormal,
-		resources: ResourceLimits{
-			MaxCPU:    0, // 不限制
-			MaxMemory: 0, // 不限制
-			MaxTime:   0, // 不限制
-		},
 	}
 
 	// 应用所有配置项

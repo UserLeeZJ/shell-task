@@ -10,7 +10,6 @@
   - [JobResult](#jobresult)
   - [Logger](#logger)
   - [Priority](#priority)
-  - [ResourceLimits](#resourcelimits)
   - [WorkerPool](#workerpool)
 - [函数](#函数)
   - [New](#new)
@@ -21,7 +20,7 @@
   - [日志选项](#日志选项)
   - [钩子选项](#钩子选项)
   - [错误处理选项](#错误处理选项)
-  - [资源和优先级选项](#资源和优先级选项)
+  - [优先级选项](#优先级选项)
 
 ## 核心类型
 
@@ -85,18 +84,6 @@ const (
 )
 ```
 
-### ResourceLimits
-
-`ResourceLimits` 定义任务资源限制：
-
-```go
-type ResourceLimits struct {
-    MaxCPU    int           // CPU 使用限制（百分比，0-100）
-    MaxMemory int           // 内存使用限制（MB，0表示不限制）
-    MaxTime   time.Duration // 最大执行时间（0表示不限制）
-}
-```
-
 ### WorkerPool
 
 `WorkerPool` 管理一组工作协程，限制并发执行的任务数量。
@@ -143,7 +130,6 @@ func NewWorkerPool(size int, logger Logger) *WorkerPool
 - `WithRepeat(interval time.Duration)`: 设置任务以固定间隔重复执行
 - `WithMaxRuns(n int)`: 设置最大运行次数
 - `WithRetry(n int)`: 设置失败后重试次数
-- `WithParallelism(n int)`: 设置并发执行数量
 - `WithStartupDelay(delay time.Duration)`: 设置延迟启动时间
 
 ### 日志选项
@@ -163,10 +149,6 @@ func NewWorkerPool(size int, logger Logger) *WorkerPool
 - `WithErrorHandler(handler func(error))`: 设置错误处理器
 - `WithCancelOnFailure(cancel bool)`: 设置失败时是否取消任务
 
-### 资源和优先级选项
+### 优先级选项
 
 - `WithPriority(priority Priority)`: 设置任务优先级
-- `WithResourceLimits(limits ResourceLimits)`: 设置任务资源限制
-- `WithMaxCPU(maxCPU int)`: 设置任务CPU使用限制
-- `WithMaxMemory(maxMemory int)`: 设置任务内存使用限制
-- `WithMaxExecutionTime(maxTime time.Duration)`: 设置任务最大执行时间

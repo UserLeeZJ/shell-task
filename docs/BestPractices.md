@@ -58,7 +58,7 @@ task.New(
             default:
                 // 继续执行
             }
-            
+
             // 执行一部分工作
             if err := doSomeWork(i); err != nil {
                 return err
@@ -139,25 +139,6 @@ task.New(
 ```
 
 ## 资源管理
-
-### 设置资源限制
-
-为任务设置资源限制，避免单个任务占用过多资源。
-
-```go
-task.New(
-    task.WithName("资源密集型任务"),
-    task.WithJob(func(ctx context.Context) error {
-        // 执行资源密集型操作
-        return processLargeData()
-    }),
-    task.WithResourceLimits(task.ResourceLimits{
-        MaxCPU:    50,           // 最多使用50%的CPU
-        MaxMemory: 1024,         // 最多使用1GB内存
-        MaxTime:   10*time.Minute, // 最多运行10分钟
-    }),
-)
-```
 
 ### 使用工作池限制并发
 
@@ -240,7 +221,7 @@ task.New(
     task.WithMetricCollector(func(res task.JobResult) {
         // 记录任务执行时间
         log.Printf("任务 '%s' 耗时 %v, 成功: %t", res.Name, res.Duration, res.Success)
-        
+
         // 可以将指标发送到监控系统
         sendMetric("task_duration", res.Duration.Seconds())
         sendMetric("task_success", boolToInt(res.Success))
@@ -335,13 +316,13 @@ func TestMyTask(t *testing.T) {
             return nil
         }),
     )
-    
+
     // 运行任务
     myTask.Run()
-    
+
     // 等待任务完成
     time.Sleep(100 * time.Millisecond)
-    
+
     // 验证任务执行结果
     if myTask.GetRunCount() != 1 {
         t.Errorf("期望运行次数为1，实际为%d", myTask.GetRunCount())
@@ -357,16 +338,16 @@ func TestMyTask(t *testing.T) {
 func TestTaskCancellation(t *testing.T) {
     // 创建一个可取消的上下文
     ctx, cancel := context.WithCancel(context.Background())
-    
+
     // 创建一个测试任务
     executed := false
     canceled := false
-    
+
     myTask := task.New(
         task.WithName("可取消的任务"),
         task.WithJob(func(taskCtx context.Context) error {
             executed = true
-            
+
             // 等待取消
             select {
             case <-taskCtx.Done():
@@ -377,17 +358,17 @@ func TestTaskCancellation(t *testing.T) {
             }
         }),
     )
-    
+
     // 运行任务
     myTask.Run()
-    
+
     // 取消上下文
     time.Sleep(100 * time.Millisecond) // 确保任务已开始执行
     cancel()
-    
+
     // 等待任务响应取消
     time.Sleep(100 * time.Millisecond)
-    
+
     // 验证任务被取消
     if !executed {
         t.Error("任务未执行")
