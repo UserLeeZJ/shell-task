@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	t := task.NewTask(
+	t := task.New(
 		task.WithName("DemoTask"),
 		task.WithJob(func(ctx context.Context) error {
 			fmt.Println("Running job...")
