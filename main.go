@@ -1,7 +1,7 @@
 // Package shelltask 提供了一个简单而灵活的任务调度系统
 package shelltask
 
-import "shell-task/scheduler"
+import "github.com/UserLeeZJ/shell-task/scheduler"
 
 // Task 代表一个可配置的任务
 type Task = scheduler.Task
