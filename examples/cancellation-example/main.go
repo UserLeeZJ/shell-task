@@ -38,7 +38,7 @@ func main() {
 			return nil
 		}),
 		task.WithStartupDelay(2*time.Second), // 延迟2秒启动
-		task.WithLogger(log.Printf),
+		task.WithLoggerFunc(log.Printf),
 		task.WithErrorHandler(func(err error) {
 			if err == context.Canceled {
 				log.Println("任务被用户取消")

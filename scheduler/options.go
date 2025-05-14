@@ -62,6 +62,13 @@ func WithLogger(logger Logger) TaskOption {
 	}
 }
 
+// WithLogger 自定义日志记录器
+func WithLoggerFunc(logFunc func(format string, args ...any)) TaskOption {
+	return func(t *Task) {
+		t.logger = NewFuncLogger(logFunc)
+	}
+}
+
 // WithRecover 添加 panic 恢复钩子
 func WithRecover(hook func(any)) TaskOption {
 	return func(t *Task) {

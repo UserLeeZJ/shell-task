@@ -39,6 +39,7 @@ var (
 	WithRetry           = scheduler.WithRetry
 	WithParallelism     = scheduler.WithParallelism
 	WithLogger          = scheduler.WithLogger
+	WithLoggerFunc      = scheduler.WithLoggerFunc
 	WithRecover         = scheduler.WithRecover
 	WithStartupDelay    = scheduler.WithStartupDelay
 	WithPreHook         = scheduler.WithPreHook

@@ -28,7 +28,7 @@ func main() {
 			return nil
 		}),
 		task.WithRepeat(5*time.Second),
-		task.WithLogger(log.Printf),
+		task.WithLoggerFunc(log.Printf),
 		task.WithMaxRuns(5), // 最多运行5次
 	)
 

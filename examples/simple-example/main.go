@@ -21,7 +21,7 @@ func main() {
 		task.WithMaxRuns(3),
 		task.WithRepeat(1*time.Second),
 		task.WithRetry(2),
-		task.WithLogger(log.Printf),
+		task.WithLoggerFunc(log.Printf),
 		task.WithErrorHandler(func(err error) {
 			log.Println("Error handled:", err)
 		}),
