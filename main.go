@@ -15,9 +15,18 @@ type JobResult = scheduler.JobResult
 // TaskOption 配置任务的函数类型
 type TaskOption = scheduler.TaskOption
 
+// Logger 定义了日志接口，支持不同级别的日志记录
+type Logger = scheduler.Logger
+
 // New 创建新的任务实例
 func New(opts ...TaskOption) *Task {
 	return scheduler.NewTask(opts...)
+}
+
+// NewFuncLogger 创建一个新的函数式日志适配器
+// 用于将单一日志函数转换为 Logger 接口，兼容旧的日志函数
+func NewFuncLogger(logFunc func(format string, args ...any)) Logger {
+	return scheduler.NewFuncLogger(logFunc)
 }
 
 // 导出所有任务配置选项

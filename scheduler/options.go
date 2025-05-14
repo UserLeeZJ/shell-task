@@ -56,14 +56,14 @@ func WithParallelism(n int) TaskOption {
 }
 
 // WithLogger 自定义日志记录器
-func WithLogger(logger func(string, ...any)) TaskOption {
+func WithLogger(logger Logger) TaskOption {
 	return func(t *Task) {
 		t.logger = logger
 	}
 }
 
 // WithRecover 添加 panic 恢复钩子
-func WithRecover(hook func(interface{})) TaskOption {
+func WithRecover(hook func(any)) TaskOption {
 	return func(t *Task) {
 		t.recoverHook = hook
 	}

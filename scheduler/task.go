@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// 使用标准库的 log 包，便于默认 logger 实现
+var stdLog = log.Printf
+
 // Job 定义任务函数
 type Job func(ctx context.Context) error
 
@@ -36,8 +39,8 @@ type Task struct {
 	postHook        func()
 	errorHandler    func(error)
 	cancelOnErr     bool
-	logger          func(string, ...any)
-	recoverHook     func(interface{})
+	logger          Logger
+	recoverHook     func(any)
 	metricCollector func(JobResult)
 
 	ctx        context.Context
@@ -53,9 +56,7 @@ func NewTask(opts ...TaskOption) *Task {
 		cancelFunc: cancel,
 
 		// 默认值
-		logger: func(format string, args ...any) {
-			log.Printf(format, args...)
-		},
+		logger: defaultLoggerInstance,
 	}
 
 	// 应用所有配置项
@@ -75,7 +76,7 @@ func (t *Task) Run() {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				t.logger("[%s] Recovered from panic: %v", t.name, r)
+				t.logger.Error("[%s] Recovered from panic: %v", t.name, r)
 				if t.recoverHook != nil {
 					t.recoverHook(r)
 				}
@@ -84,10 +85,10 @@ func (t *Task) Run() {
 
 		// 延迟启动
 		if t.startupDelay > 0 {
-			t.logger("[%s] Startup delay: %v", t.name, t.startupDelay)
+			t.logger.Info("[%s] Startup delay: %v", t.name, t.startupDelay)
 			select {
 			case <-t.ctx.Done():
-				t.logger("[%s] Startup delay interrupted: %v", t.name, t.ctx.Err())
+				t.logger.Warn("[%s] Startup delay interrupted: %v", t.name, t.ctx.Err())
 				return
 			case <-time.After(t.startupDelay):
 			}
@@ -96,7 +97,7 @@ func (t *Task) Run() {
 		for {
 			select {
 			case <-t.ctx.Done():
-				t.logger("[%s] Task stopped: %v", t.name, t.ctx.Err())
+				t.logger.Info("[%s] Task stopped: %v", t.name, t.ctx.Err())
 				return
 			default:
 				if t.preHook != nil {
@@ -121,7 +122,7 @@ func (t *Task) Run() {
 
 					// 检查是否因为超时而取消
 					if jobCtx.Err() == context.DeadlineExceeded {
-						t.logger("[%s] Task timed out after %v", t.name, t.timeout)
+						t.logger.Error("[%s] Task timed out after %v", t.name, t.timeout)
 						err = fmt.Errorf("task timed out after %v: %w", t.timeout, jobCtx.Err())
 					}
 
@@ -141,9 +142,9 @@ func (t *Task) Run() {
 					}
 
 					if attempt < t.retryTimes {
-						t.logger("[%s] Attempt %d failed: %v, retrying...", t.name, attempt+1, err)
+						t.logger.Warn("[%s] Attempt %d failed: %v, retrying...", t.name, attempt+1, err)
 					} else {
-						t.logger("[%s] Failed after %d attempts: %v", t.name, t.retryTimes, err)
+						t.logger.Error("[%s] Failed after %d attempts: %v", t.name, t.retryTimes, err)
 						if t.errorHandler != nil {
 							t.errorHandler(err)
 						}
@@ -160,7 +161,7 @@ func (t *Task) Run() {
 				// 判断最大运行次数
 				t.runCount++
 				if t.maxRuns > 0 && t.runCount >= t.maxRuns {
-					t.logger("[%s] Reached max runs (%d), stopping.", t.name, t.maxRuns)
+					t.logger.Info("[%s] Reached max runs (%d), stopping.", t.name, t.maxRuns)
 					t.cancelFunc()
 					return
 				}
@@ -173,7 +174,7 @@ func (t *Task) Run() {
 				// 等待下一次执行
 				select {
 				case <-t.ctx.Done():
-					t.logger("[%s] Next execution canceled: %v", t.name, t.ctx.Err())
+					t.logger.Info("[%s] Next execution canceled: %v", t.name, t.ctx.Err())
 					return
 				case <-time.After(t.interval):
 				}
@@ -185,7 +186,7 @@ func (t *Task) Run() {
 // Stop 停止任务
 func (t *Task) Stop() {
 	if t.ctx.Err() == nil { // 只有在任务未停止时才记录日志和取消
-		t.logger("[%s] Stopping task...", t.name)
+		t.logger.Info("[%s] Stopping task...", t.name)
 		t.cancelFunc()
 	}
 }

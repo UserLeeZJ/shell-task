@@ -208,6 +208,62 @@ t.Run()
 t.Stop()
 ```
 
+### 自定义日志记录器
+
+Shell-Task 支持自定义日志记录器，可以实现 `Logger` 接口来控制不同级别的日志输出：
+
+```go
+// 自定义日志实现
+type CustomLogger struct {
+    debugEnabled bool
+}
+
+func (l *CustomLogger) Debug(format string, args ...any) {
+    if l.debugEnabled {
+        log.Printf("[DEBUG] "+format, args...)
+    }
+}
+
+func (l *CustomLogger) Info(format string, args ...any) {
+    log.Printf("[INFO] "+format, args...)
+}
+
+func (l *CustomLogger) Warn(format string, args ...any) {
+    log.Printf("[WARN] "+format, args...)
+}
+
+func (l *CustomLogger) Error(format string, args ...any) {
+    log.Printf("[ERROR] "+format, args...)
+}
+
+// 使用自定义日志记录器
+logger := &CustomLogger{debugEnabled: true}
+t := task.New(
+    task.WithName("日志示例"),
+    task.WithJob(func(ctx context.Context) error {
+        return nil
+    }),
+    task.WithLogger(logger),
+)
+```
+
+也可以使用兼容旧版本的日志函数：
+
+```go
+// 使用函数式日志适配器
+oldStyleLogger := task.NewFuncLogger(func(format string, args ...any) {
+    log.Printf("[LOG] "+format, args...)
+})
+
+t := task.New(
+    task.WithName("旧风格日志"),
+    task.WithJob(func(ctx context.Context) error {
+        return nil
+    }),
+    task.WithLogger(oldStyleLogger),
+)
+```
+
 更多示例请查看 [examples](./examples) 目录。
 
 ## 构建和测试
