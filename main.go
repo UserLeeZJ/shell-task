@@ -37,6 +37,5 @@ var (
 	WithErrorHandler    = scheduler.WithErrorHandler
 	WithCancelOnFailure = scheduler.WithCancelOnFailure
 	WithMetricCollector = scheduler.WithMetricCollector
-	WithSchedule        = scheduler.WithSchedule
-	WithNaturalTime     = scheduler.WithNaturalTime
+
 )
