@@ -1,5 +1,5 @@
-// Package shelltask 提供了一个简单而灵活的任务调度系统
-package shelltask
+// Package shell_task 提供了一个简单而灵活的任务调度系统
+package shell_task
 
 import "github.com/UserLeeZJ/shell-task/scheduler"
 
@@ -37,5 +37,4 @@ var (
 	WithErrorHandler    = scheduler.WithErrorHandler
 	WithCancelOnFailure = scheduler.WithCancelOnFailure
 	WithMetricCollector = scheduler.WithMetricCollector
-
 )

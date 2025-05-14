@@ -167,3 +167,8 @@ func (t *Task) Run() {
 func (t *Task) Stop() {
 	t.cancelFunc()
 }
+
+// GetRunCount 返回当前运行次数
+func (t *Task) GetRunCount() int {
+	return t.runCount
+}
