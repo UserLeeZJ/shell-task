@@ -87,6 +87,7 @@ func (t *Task) Run() {
 			t.logger("[%s] Startup delay: %v", t.name, t.startupDelay)
 			select {
 			case <-t.ctx.Done():
+				t.logger("[%s] Startup delay interrupted: %v", t.name, t.ctx.Err())
 				return
 			case <-time.After(t.startupDelay):
 			}
@@ -172,6 +173,7 @@ func (t *Task) Run() {
 				// 等待下一次执行
 				select {
 				case <-t.ctx.Done():
+					t.logger("[%s] Next execution canceled: %v", t.name, t.ctx.Err())
 					return
 				case <-time.After(t.interval):
 				}
@@ -182,7 +184,10 @@ func (t *Task) Run() {
 
 // Stop 停止任务
 func (t *Task) Stop() {
-	t.cancelFunc()
+	if t.ctx.Err() == nil { // 只有在任务未停止时才记录日志和取消
+		t.logger("[%s] Stopping task...", t.name)
+		t.cancelFunc()
+	}
 }
 
 // GetRunCount 返回当前运行次数

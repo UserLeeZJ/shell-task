@@ -175,6 +175,39 @@ t := task.New(
 )
 ```
 
+### 优雅取消任务
+
+```go
+// 创建任务
+t := task.New(
+    task.WithName("可取消任务"),
+    task.WithJob(func(ctx context.Context) error {
+        // 在任务中定期检查取消信号
+        for i := 1; i <= 10; i++ {
+            select {
+            case <-ctx.Done():
+                log.Printf("任务被取消: %v", ctx.Err())
+                return ctx.Err()
+            case <-time.After(1 * time.Second):
+                log.Printf("任务执行中: %d/10", i)
+            }
+        }
+        return nil
+    }),
+    task.WithErrorHandler(func(err error) {
+        if err == context.Canceled {
+            log.Println("任务被用户取消")
+        }
+    }),
+)
+
+// 启动任务
+t.Run()
+
+// 在需要时停止任务
+t.Stop()
+```
+
 更多示例请查看 [examples](./examples) 目录。
 
 ## 构建和测试
