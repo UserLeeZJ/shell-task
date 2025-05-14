@@ -8,34 +8,34 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/UserLeeZJ/shell-task"
+	task "github.com/UserLeeZJ/shell-task"
 )
 
 func main() {
-	task := scheduler.NewTask(
-		scheduler.WithName("DemoTask"),
-		scheduler.WithJob(func(ctx context.Context) error {
+	t := task.NewTask(
+		task.WithName("DemoTask"),
+		task.WithJob(func(ctx context.Context) error {
 			fmt.Println("Running job...")
 			return fmt.Errorf("simulated error")
 		}),
-		scheduler.WithMaxRuns(3),
-		scheduler.WithRepeat(1*time.Second),
-		scheduler.WithRetry(2),
-		scheduler.WithLogger(log.Printf),
-		scheduler.WithErrorHandler(func(err error) {
+		task.WithMaxRuns(3),
+		task.WithRepeat(1*time.Second),
+		task.WithRetry(2),
+		task.WithLogger(log.Printf),
+		task.WithErrorHandler(func(err error) {
 			log.Println("Error handled:", err)
 		}),
-		scheduler.WithCancelOnFailure(true),
-		scheduler.WithMetricCollector(func(res scheduler.JobResult) {
+		task.WithCancelOnFailure(true),
+		task.WithMetricCollector(func(res task.JobResult) {
 			log.Printf("Job '%s' took %v, success: %t", res.Name, res.Duration, res.Success)
 		}),
-		scheduler.WithRecover(func(r interface{}) {
+		task.WithRecover(func(r interface{}) {
 			log.Printf("Recovered from panic: %v\nStack:\n%s", r, debug.Stack())
 		}),
 	)
 
-	task.Run()
+	t.Run()
 
 	time.Sleep(10 * time.Second)
-	task.Stop()
+	t.Stop()
 }
