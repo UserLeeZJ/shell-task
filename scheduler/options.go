@@ -62,7 +62,7 @@ func WithLogger(logger Logger) TaskOption {
 	}
 }
 
-// WithLogger 自定义日志记录器
+// WithLoggerFunc 使用函数作为日志记录器
 func WithLoggerFunc(logFunc func(format string, args ...any)) TaskOption {
 	return func(t *Task) {
 		t.logger = NewFuncLogger(logFunc)
@@ -115,5 +115,40 @@ func WithCancelOnFailure(cancel bool) TaskOption {
 func WithMetricCollector(collector func(JobResult)) TaskOption {
 	return func(t *Task) {
 		t.metricCollector = collector
+	}
+}
+
+// WithPriority 设置任务优先级
+func WithPriority(priority Priority) TaskOption {
+	return func(t *Task) {
+		t.priority = priority
+	}
+}
+
+// WithResourceLimits 设置任务资源限制
+func WithResourceLimits(limits ResourceLimits) TaskOption {
+	return func(t *Task) {
+		t.resources = limits
+	}
+}
+
+// WithMaxCPU 设置任务CPU使用限制
+func WithMaxCPU(maxCPU int) TaskOption {
+	return func(t *Task) {
+		t.resources.MaxCPU = maxCPU
+	}
+}
+
+// WithMaxMemory 设置任务内存使用限制
+func WithMaxMemory(maxMemory int) TaskOption {
+	return func(t *Task) {
+		t.resources.MaxMemory = maxMemory
+	}
+}
+
+// WithMaxExecutionTime 设置任务最大执行时间
+func WithMaxExecutionTime(maxTime time.Duration) TaskOption {
+	return func(t *Task) {
+		t.resources.MaxTime = maxTime
 	}
 }

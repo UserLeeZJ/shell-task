@@ -25,6 +25,22 @@ type JobResult struct {
 // TaskOption 是配置任务的函数类型
 type TaskOption func(*Task)
 
+// Priority 定义任务优先级
+type Priority int
+
+const (
+	PriorityLow    Priority = 1
+	PriorityNormal Priority = 5
+	PriorityHigh   Priority = 10
+)
+
+// ResourceLimits 定义任务资源限制
+type ResourceLimits struct {
+	MaxCPU    int           // CPU 使用限制（百分比，0-100）
+	MaxMemory int           // 内存使用限制（MB，0表示不限制）
+	MaxTime   time.Duration // 最大执行时间（0表示不限制）
+}
+
 // Task 表示一个可配置的任务
 type Task struct {
 	name            string
@@ -42,6 +58,8 @@ type Task struct {
 	logger          Logger
 	recoverHook     func(any)
 	metricCollector func(JobResult)
+	priority        Priority       // 任务优先级
+	resources       ResourceLimits // 资源限制
 
 	ctx        context.Context
 	cancelFunc context.CancelFunc
@@ -56,7 +74,13 @@ func NewTask(opts ...TaskOption) *Task {
 		cancelFunc: cancel,
 
 		// 默认值
-		logger: defaultLoggerInstance,
+		logger:   defaultLoggerInstance,
+		priority: PriorityNormal,
+		resources: ResourceLimits{
+			MaxCPU:    0, // 不限制
+			MaxMemory: 0, // 不限制
+			MaxTime:   0, // 不限制
+		},
 	}
 
 	// 应用所有配置项

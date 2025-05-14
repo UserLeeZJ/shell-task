@@ -18,6 +18,19 @@ type TaskOption = scheduler.TaskOption
 // Logger 定义了日志接口，支持不同级别的日志记录
 type Logger = scheduler.Logger
 
+// Priority 定义任务优先级
+type Priority = scheduler.Priority
+
+// ResourceLimits 定义任务资源限制
+type ResourceLimits = scheduler.ResourceLimits
+
+// 预定义优先级常量
+const (
+	PriorityLow    = scheduler.PriorityLow
+	PriorityNormal = scheduler.PriorityNormal
+	PriorityHigh   = scheduler.PriorityHigh
+)
+
 // New 创建新的任务实例
 func New(opts ...TaskOption) *Task {
 	return scheduler.NewTask(opts...)
@@ -29,8 +42,17 @@ func NewFuncLogger(logFunc func(format string, args ...any)) Logger {
 	return scheduler.NewFuncLogger(logFunc)
 }
 
+// WorkerPool 表示一个工作池，用于限制并发执行的任务数量
+type WorkerPool = scheduler.WorkerPool
+
+// NewWorkerPool 创建一个新的工作池
+func NewWorkerPool(size int, logger Logger) *WorkerPool {
+	return scheduler.NewWorkerPool(size, logger)
+}
+
 // 导出所有任务配置选项
 var (
+	// 基本选项
 	WithName            = scheduler.WithName
 	WithJob             = scheduler.WithJob
 	WithTimeout         = scheduler.WithTimeout
@@ -47,4 +69,11 @@ var (
 	WithErrorHandler    = scheduler.WithErrorHandler
 	WithCancelOnFailure = scheduler.WithCancelOnFailure
 	WithMetricCollector = scheduler.WithMetricCollector
+
+	// 优先级和资源限制选项
+	WithPriority         = scheduler.WithPriority
+	WithResourceLimits   = scheduler.WithResourceLimits
+	WithMaxCPU           = scheduler.WithMaxCPU
+	WithMaxMemory        = scheduler.WithMaxMemory
+	WithMaxExecutionTime = scheduler.WithMaxExecutionTime
 )
