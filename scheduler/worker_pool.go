@@ -234,9 +234,29 @@ func (wp *WorkerPool) scheduler() {
 			continue
 		}
 
+		// 检查任务依赖是否满足
+		if !task.AreDependenciesMet() {
+			wp.logger.Debug("Task has unmet dependencies, re-enqueuing: %s", task.name)
+
+			// 设置依赖满足时的回调
+			task.WithOnDependenciesMet(func() {
+				wp.logger.Debug("Dependencies met for task: %s, will be scheduled soon", task.name)
+				// 依赖满足时，重新提交任务
+				wp.Submit(task)
+			})
+
+			// 将任务放回队列末尾，避免一直检查同一个任务
+			time.Sleep(500 * time.Millisecond)
+			wp.taskQueue.Enqueue(task)
+			continue
+		}
+
 		// 将任务发送到任务通道
 		select {
 		case <-wp.ctx.Done():
+			// 如果上下文被取消，将任务放回队列
+			wp.taskQueue.Enqueue(task)
+			wp.logger.Debug("Scheduler stopped while dispatching task: %s", task.name)
 			return
 		case wp.taskChan <- task:
 			wp.logger.Debug("Task scheduled: %s (priority: %d)", task.name, task.priority)

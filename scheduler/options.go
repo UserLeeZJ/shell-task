@@ -48,6 +48,16 @@ func WithRetry(n int) TaskOption {
 	}
 }
 
+// WithRetryStrategy 设置重试策略
+func WithRetryStrategy(strategy RetryStrategy) TaskOption {
+	return func(t *Task) {
+		t.retryStrategy = strategy
+		if strategy != nil {
+			t.retryTimes = strategy.MaxRetries()
+		}
+	}
+}
+
 // 移除 WithParallelism 选项
 
 // WithLogger 自定义日志记录器
@@ -120,6 +130,13 @@ func WithPriority(priority Priority) TaskOption {
 	}
 }
 
+// WithSync 设置任务是否同步执行
+func WithSync(sync bool) TaskOption {
+	return func(t *Task) {
+		t.syncExec = sync
+	}
+}
+
 // 移除资源限制相关的选项函数
 
 // WithInitialState 设置任务的初始状态
@@ -129,4 +146,49 @@ func WithInitialState(state TaskState) TaskOption {
 	}
 }
 
+// WithDependencies 设置任务依赖
+func WithDependencies(dependencies ...*Task) TaskOption {
+	return func(t *Task) {
+		t.DependsOn(dependencies...)
+	}
+}
+
+// WithDependenciesCallback 设置依赖满足时的回调
+func WithDependenciesCallback(callback func()) TaskOption {
+	return func(t *Task) {
+		t.WithOnDependenciesMet(callback)
+	}
+}
+
 // WithStateChangeCallback 已在 task.go 中定义
+
+// WithTaskContext 设置任务上下文
+func WithTaskContext(ctx *TaskContext) TaskOption {
+	return func(t *Task) {
+		t.taskContext = ctx
+	}
+}
+
+// WithContextPrep 设置上下文准备钩子
+func WithContextPrep(prep func(*TaskContext)) TaskOption {
+	return func(t *Task) {
+		t.contextPrep = prep
+	}
+}
+
+// WithContextClean 设置上下文清理钩子
+func WithContextClean(clean func(*TaskContext)) TaskOption {
+	return func(t *Task) {
+		t.contextClean = clean
+	}
+}
+
+// WithContextValue 设置上下文值
+func WithContextValue(key string, value interface{}) TaskOption {
+	return func(t *Task) {
+		if t.taskContext == nil {
+			t.taskContext = NewTaskContext()
+		}
+		t.taskContext.Set(key, value)
+	}
+}

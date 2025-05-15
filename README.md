@@ -120,6 +120,34 @@ Shell-Task 提供了多种配置选项，可以根据需要组合使用：
 
 ## 高级用法
 
+### 使用任务构建器
+
+```go
+// 使用任务构建器创建和配置任务
+task1 := task.NewTaskBuilder("构建器示例").
+    WithJob(func(ctx context.Context) error {
+        fmt.Println("执行任务...")
+        return nil
+    }).
+    WithTimeout(5 * time.Second).
+    WithRepeat(30 * time.Second).
+    WithRetry(3).
+    WithPriority(task.PriorityHigh).
+    WithErrorHandler(func(err error) {
+        log.Printf("处理错误: %v", err)
+    }).
+    Run() // 构建并立即运行任务
+
+// 或者先构建再运行
+task2 := task.NewTaskBuilder("另一个任务").
+    WithJob(func(ctx context.Context) error {
+        return nil
+    }).
+    Build() // 仅构建不运行
+
+task2.Run() // 稍后运行
+```
+
 ### 指标收集
 
 ```go
@@ -207,6 +235,36 @@ t.Run()
 t.Stop()
 ```
 
+### 上下文传递
+
+```go
+// 使用上下文传递数据
+task1 := task.TaskWithContextMap("数据准备", func(ctx context.Context, data map[string]interface{}) error {
+    // 将数据存储到上下文中
+    data["result"] = "准备好的数据"
+    data["timestamp"] = time.Now().Format(time.RFC3339)
+    return nil
+})
+
+// 或者使用构建器 API
+task2 := task.NewTaskBuilder("数据处理").
+    WithMapContextJob(func(ctx context.Context, data map[string]interface{}) error {
+        // 获取上一个任务传递的数据
+        result := data["result"]
+        log.Printf("处理数据: %v", result)
+        return nil
+    }).
+    Build()
+
+// 创建任务链，自动传递上下文数据
+tasks := task.ChainTasks(task1, task2)
+
+// 运行所有任务
+for _, t := range tasks {
+    t.Run()
+}
+```
+
 ### 自定义日志记录器
 
 Shell-Task 支持自定义日志记录器，可以实现 `Logger` 接口来控制不同级别的日志输出：
@@ -281,7 +339,6 @@ make run
 ## 可能的改进方向
 
 - 添加 cron 表达式支持，实现更灵活的调度
-- 实现任务依赖关系，支持任务链和工作流
 - 添加持久化支持，允许任务状态保存和恢复
 - 提供 HTTP API 接口，便于远程管理和监控
 - 实现分布式任务调度，支持多节点协作
