@@ -1,4 +1,4 @@
-// cmd/shelltask/cli_functions2.go
+// cmd/shelltask/cli_task.go
 package main
 
 import (
@@ -8,9 +8,103 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/UserLeeZJ/shell-task/manager"
 	"github.com/UserLeeZJ/shell-task/storage"
 )
+
+// createTask 创建新任务
+func createTask(s *storage.SQLiteStorage) {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	// 创建任务
+	task := new(storage.TaskInfo)
+	task.Status = "idle"
+
+	fmt.Print("任务名称: ")
+	scanner.Scan()
+	task.Name = scanner.Text()
+	if task.Name == "" {
+		fmt.Println("任务名称不能为空")
+		return
+	}
+
+	fmt.Print("任务类型 (lua/shell): ")
+	scanner.Scan()
+	taskType := scanner.Text()
+	switch taskType {
+	case "lua":
+		task.Type = "lua"
+	case "shell":
+		task.Type = "shell"
+	default:
+		fmt.Println("无效的任务类型")
+		return
+	}
+
+	fmt.Print("任务内容 (脚本内容或命令): ")
+	scanner.Scan()
+	task.Content = scanner.Text()
+	if task.Content == "" {
+		fmt.Println("任务内容不能为空")
+		return
+	}
+
+	fmt.Print("重复间隔 (秒): ")
+	scanner.Scan()
+	interval, err := strconv.ParseInt(scanner.Text(), 10, 64)
+	if err != nil {
+		fmt.Printf("无效的间隔: %v\n", err)
+		return
+	}
+	task.Interval = interval
+
+	fmt.Print("最大运行次数 (0表示无限): ")
+	scanner.Scan()
+	maxRuns, err := strconv.Atoi(scanner.Text())
+	if err != nil {
+		fmt.Printf("无效的最大运行次数: %v\n", err)
+		return
+	}
+	task.MaxRuns = maxRuns
+
+	fmt.Print("重试次数: ")
+	scanner.Scan()
+	retryTimes, err := strconv.Atoi(scanner.Text())
+	if err != nil {
+		fmt.Printf("无效的重试次数: %v\n", err)
+		return
+	}
+	task.RetryTimes = retryTimes
+
+	fmt.Print("超时 (秒): ")
+	scanner.Scan()
+	timeout, err := strconv.ParseInt(scanner.Text(), 10, 64)
+	if err != nil {
+		fmt.Printf("无效的超时: %v\n", err)
+		return
+	}
+	task.Timeout = timeout
+
+	fmt.Print("描述: ")
+	scanner.Scan()
+	task.Description = scanner.Text()
+
+	fmt.Print("标签 (用逗号分隔): ")
+	scanner.Scan()
+	tagsStr := scanner.Text()
+	if tagsStr != "" {
+		task.Tags = strings.Split(tagsStr, ",")
+		for i := range task.Tags {
+			task.Tags[i] = strings.TrimSpace(task.Tags[i])
+		}
+	}
+
+	if err := s.SaveTask(task); err != nil {
+		fmt.Printf("保存任务失败: %v\n", err)
+		return
+	}
+
+	fmt.Printf("任务已创建，ID: %d\n", task.ID)
+}
 
 // editTask 编辑任务
 func editTask(storage *storage.SQLiteStorage) {
@@ -124,85 +218,4 @@ func editTask(storage *storage.SQLiteStorage) {
 	}
 
 	fmt.Println("任务已更新")
-}
-
-// deleteTask 删除任务
-func deleteTask(storage *storage.SQLiteStorage) {
-	fmt.Print("请输入任务 ID: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	idStr := scanner.Text()
-
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		fmt.Printf("无效的 ID: %v\n", err)
-		return
-	}
-
-	fmt.Print("确认删除? (y/n): ")
-	scanner.Scan()
-	confirm := scanner.Text()
-	if confirm != "y" && confirm != "Y" {
-		fmt.Println("已取消")
-		return
-	}
-
-	if err := storage.DeleteTask(id); err != nil {
-		fmt.Printf("删除任务失败: %v\n", err)
-		return
-	}
-
-	fmt.Println("任务已删除")
-}
-
-// runTask 运行任务
-func runTask(storage *storage.SQLiteStorage, manager *manager.TaskManager) {
-	fmt.Print("请输入任务 ID: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	idStr := scanner.Text()
-
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		fmt.Printf("无效的 ID: %v\n", err)
-		return
-	}
-
-	if manager.IsTaskRunning(id) {
-		fmt.Println("任务已经在运行中")
-		return
-	}
-
-	if err := manager.StartTask(id); err != nil {
-		fmt.Printf("启动任务失败: %v\n", err)
-		return
-	}
-
-	fmt.Println("任务已启动")
-}
-
-// stopTask 停止任务
-func stopTask(storage *storage.SQLiteStorage, manager *manager.TaskManager) {
-	fmt.Print("请输入任务 ID: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	idStr := scanner.Text()
-
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		fmt.Printf("无效的 ID: %v\n", err)
-		return
-	}
-
-	if !manager.IsTaskRunning(id) {
-		fmt.Println("任务未在运行")
-		return
-	}
-
-	if err := manager.StopTask(id); err != nil {
-		fmt.Printf("停止任务失败: %v\n", err)
-		return
-	}
-
-	fmt.Println("任务已停止")
 }
