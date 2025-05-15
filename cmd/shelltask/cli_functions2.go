@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/UserLeeZJ/shell-task/lua"
 	"github.com/UserLeeZJ/shell-task/manager"
 	"github.com/UserLeeZJ/shell-task/storage"
 )

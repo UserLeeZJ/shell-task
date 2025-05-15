@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/UserLeeZJ/shell-task/lua"
-	"github.com/UserLeeZJ/shell-task/manager"
 	"github.com/UserLeeZJ/shell-task/storage"
 )
 
@@ -101,7 +99,7 @@ func viewTask(storage *storage.SQLiteStorage) {
 func createTask(storage *storage.SQLiteStorage) {
 	scanner := bufio.NewScanner(os.Stdin)
 
-	task := &storage.TaskInfo{}
+	task := new(storage.TaskInfo)
 	task.Status = "idle"
 
 	fmt.Print("任务名称: ")
@@ -183,7 +181,7 @@ func createTask(storage *storage.SQLiteStorage) {
 		}
 	}
 
-	if err := storage.SaveTask(task); err != nil {
+	if err := storage.SaveTask(&task); err != nil {
 		fmt.Printf("保存任务失败: %v\n", err)
 		return
 	}
