@@ -4,8 +4,30 @@ package scheduler
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+// TaskStatus 表示任务的状态
+type TaskStatus int
+
+const (
+	TaskStatusPending   TaskStatus = iota // 等待执行
+	TaskStatusRunning                     // 正在执行
+	TaskStatusCompleted                   // 已完成
+	TaskStatusFailed                      // 执行失败
+	TaskStatusCancelled                   // 已取消
+)
+
+// TaskInfo 存储任务的状态信息
+type TaskInfo struct {
+	Task      *Task      // 任务引用
+	Status    TaskStatus // 任务状态
+	WorkerID  int        // 执行该任务的工作协程ID
+	StartTime time.Time  // 开始执行时间
+	EndTime   time.Time  // 结束执行时间
+	Error     error      // 执行错误（如果有）
+}
 
 // WorkerPool 管理一组工作协程，限制并发执行的任务数量
 type WorkerPool struct {
@@ -18,10 +40,39 @@ type WorkerPool struct {
 	logger     Logger             // 日志记录器
 	mutex      sync.Mutex         // 互斥锁，保护共享数据
 	running    bool               // 工作池是否正在运行
+
+	// 任务状态跟踪
+	tasksMutex sync.RWMutex         // 保护任务状态映射的互斥锁
+	tasks      map[string]*TaskInfo // 任务状态映射，键为任务名称
+
+	// 统计信息
+	completedTasks int64 // 已完成任务数量
+	failedTasks    int64 // 失败任务数量
+
+	// 生命周期回调
+	onTaskStart  func(*Task)        // 任务开始执行时的回调
+	onTaskFinish func(*Task, error) // 任务完成执行时的回调
+}
+
+// WorkerPoolOption 是配置工作池的函数类型
+type WorkerPoolOption func(*WorkerPool)
+
+// WithTaskStartCallback 设置任务开始执行时的回调函数
+func WithTaskStartCallback(callback func(*Task)) WorkerPoolOption {
+	return func(wp *WorkerPool) {
+		wp.onTaskStart = callback
+	}
+}
+
+// WithTaskFinishCallback 设置任务完成执行时的回调函数
+func WithTaskFinishCallback(callback func(*Task, error)) WorkerPoolOption {
+	return func(wp *WorkerPool) {
+		wp.onTaskFinish = callback
+	}
 }
 
 // NewWorkerPool 创建一个新的工作池
-func NewWorkerPool(size int, logger Logger) *WorkerPool {
+func NewWorkerPool(size int, logger Logger, opts ...WorkerPoolOption) *WorkerPool {
 	if size <= 0 {
 		size = 1 // 至少有一个工作协程
 	}
@@ -32,7 +83,7 @@ func NewWorkerPool(size int, logger Logger) *WorkerPool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	return &WorkerPool{
+	wp := &WorkerPool{
 		size:       size,
 		taskQueue:  NewPriorityQueue(),
 		taskChan:   make(chan *Task, size*2), // 缓冲区大小为工作池大小的两倍
@@ -40,7 +91,25 @@ func NewWorkerPool(size int, logger Logger) *WorkerPool {
 		cancelFunc: cancel,
 		logger:     logger,
 		running:    false,
+
+		// 初始化任务状态跟踪
+		tasks: make(map[string]*TaskInfo),
+
+		// 默认回调函数
+		onTaskStart: func(t *Task) {
+			// 默认实现为空
+		},
+		onTaskFinish: func(t *Task, err error) {
+			// 默认实现为空
+		},
 	}
+
+	// 应用所有配置项
+	for _, opt := range opts {
+		opt(wp)
+	}
+
+	return wp
 }
 
 // Start 启动工作池
@@ -91,9 +160,56 @@ func (wp *WorkerPool) Submit(task *Task) {
 		return
 	}
 
+	// 记录任务状态
+	wp.tasksMutex.Lock()
+	wp.tasks[task.name] = &TaskInfo{
+		Task:      task,
+		Status:    TaskStatusPending,
+		StartTime: time.Time{}, // 零值表示未开始
+	}
+	wp.tasksMutex.Unlock()
+
 	// 将任务添加到优先级队列
 	wp.taskQueue.Enqueue(task)
 	wp.logger.Debug("Task submitted to worker pool: %s (priority: %d)", task.name, task.priority)
+}
+
+// GetTaskInfo 获取任务的状态信息
+func (wp *WorkerPool) GetTaskInfo(taskName string) (*TaskInfo, bool) {
+	wp.tasksMutex.RLock()
+	defer wp.tasksMutex.RUnlock()
+
+	info, exists := wp.tasks[taskName]
+	return info, exists
+}
+
+// GetAllTasksInfo 获取所有任务的状态信息
+func (wp *WorkerPool) GetAllTasksInfo() map[string]*TaskInfo {
+	wp.tasksMutex.RLock()
+	defer wp.tasksMutex.RUnlock()
+
+	// 创建一个副本以避免并发访问问题
+	result := make(map[string]*TaskInfo, len(wp.tasks))
+	for k, v := range wp.tasks {
+		result[k] = v
+	}
+
+	return result
+}
+
+// GetStats 获取工作池的统计信息
+func (wp *WorkerPool) GetStats() (int, int64, int64) {
+	wp.tasksMutex.RLock()
+	defer wp.tasksMutex.RUnlock()
+
+	pendingTasks := 0
+	for _, info := range wp.tasks {
+		if info.Status == TaskStatusPending {
+			pendingTasks++
+		}
+	}
+
+	return pendingTasks, atomic.LoadInt64(&wp.completedTasks), atomic.LoadInt64(&wp.failedTasks)
 }
 
 // scheduler 是调度协程的主函数，负责将任务从优先级队列移动到任务通道
@@ -147,8 +263,83 @@ func (wp *WorkerPool) worker(id int) {
 
 			wp.logger.Debug("Worker %d executing task: %s", id, task.name)
 
-			// 执行任务
-			task.Run()
+			// 更新任务状态为运行中
+			wp.tasksMutex.Lock()
+			if info, exists := wp.tasks[task.name]; exists {
+				info.Status = TaskStatusRunning
+				info.WorkerID = id
+				info.StartTime = time.Now()
+			}
+			wp.tasksMutex.Unlock()
+
+			// 调用任务开始回调
+			wp.onTaskStart(task)
+
+			// 创建一个通道来接收任务完成信号
+			done := make(chan struct{})
+			var taskErr error
+
+			// 启动一个协程来监控任务执行
+			go func() {
+				// 设置任务完成回调
+				originalPostHook := task.postHook
+				task.postHook = func() {
+					if originalPostHook != nil {
+						originalPostHook()
+					}
+					close(done)
+				}
+
+				// 设置任务错误处理器
+				originalErrorHandler := task.errorHandler
+				task.errorHandler = func(err error) {
+					if originalErrorHandler != nil {
+						originalErrorHandler(err)
+					}
+					taskErr = err
+				}
+
+				// 执行任务
+				task.Run()
+			}()
+
+			// 等待任务完成或工作池停止
+			select {
+			case <-done:
+				// 任务正常完成
+				wp.tasksMutex.Lock()
+				if info, exists := wp.tasks[task.name]; exists {
+					if taskErr != nil {
+						info.Status = TaskStatusFailed
+						info.Error = taskErr
+						atomic.AddInt64(&wp.failedTasks, 1)
+					} else {
+						info.Status = TaskStatusCompleted
+						atomic.AddInt64(&wp.completedTasks, 1)
+					}
+					info.EndTime = time.Now()
+				}
+				wp.tasksMutex.Unlock()
+
+				// 调用任务完成回调
+				wp.onTaskFinish(task, taskErr)
+
+				wp.logger.Debug("Worker %d completed task: %s, error: %v", id, task.name, taskErr)
+
+			case <-wp.ctx.Done():
+				// 工作池停止，取消任务
+				task.Stop()
+
+				wp.tasksMutex.Lock()
+				if info, exists := wp.tasks[task.name]; exists {
+					info.Status = TaskStatusCancelled
+					info.EndTime = time.Now()
+				}
+				wp.tasksMutex.Unlock()
+
+				wp.logger.Debug("Worker %d cancelled task: %s due to pool shutdown", id, task.name)
+				return
+			}
 		}
 	}
 }

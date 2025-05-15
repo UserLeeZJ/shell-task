@@ -121,3 +121,12 @@ func WithPriority(priority Priority) TaskOption {
 }
 
 // 移除资源限制相关的选项函数
+
+// WithInitialState 设置任务的初始状态
+func WithInitialState(state TaskState) TaskOption {
+	return func(t *Task) {
+		t.state = state
+	}
+}
+
+// WithStateChangeCallback 已在 task.go 中定义
