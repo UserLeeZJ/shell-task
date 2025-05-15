@@ -1,15 +1,19 @@
 # Shell Task
 
-Shell Task 是一个基于 Go 语言开发的任务调度器，支持 Lua 脚本和 Shell 命令的执行，并提供了 TUI（终端用户界面）进行管理。
+Shell Task 是一个基于 Go 语言开发的任务调度器，支持 Lua 脚本和 Shell 命令的执行，提供命令行界面进行管理，并计划添加 TUI（终端用户界面）支持。
 
 ## 功能特点
 
 - 支持 Lua 脚本任务
 - 支持 Shell 命令任务
+- 支持 Go 函数任务（计划中）
 - SQLite 持久化存储任务
-- 基于 Bubbletea 的终端用户界面
+- 命令行界面
+- TUI 终端用户界面（计划中）
 - 支持任务的创建、编辑、删除、运行和停止
 - 支持任务重试、超时和定时执行
+- 支持任务依赖和任务分组（计划中）
+- 支持高级重试策略（计划中）
 
 ## 安装
 
@@ -25,7 +29,7 @@ go build -o shelltask.exe cmd/shelltask/main.go
 
 ### 命令行参数
 
-```
+```text
 Shell Task - 任务调度器
 用法: shelltask [选项]
 选项:
@@ -33,24 +37,10 @@ Shell Task - 任务调度器
         SQLite 数据库路径
   -help
         显示帮助信息
-  -no-ui
-        不启动 UI 界面
   -scripts string
         Lua 脚本目录
   -version
         显示版本信息
-```
-
-### 启动 UI 界面
-
-```bash
-shelltask.exe
-```
-
-### 守护模式（不启动 UI）
-
-```bash
-shelltask.exe -no-ui
 ```
 
 ### 指定数据库和脚本目录
@@ -59,31 +49,7 @@ shelltask.exe -no-ui
 shelltask.exe -db C:\path\to\tasks.db -scripts C:\path\to\scripts
 ```
 
-## UI 界面操作
 
-### 任务列表
-
-- `↑/k` - 上移
-- `↓/j` - 下移
-- `Enter` - 查看任务详情
-- `c` - 创建新任务
-- `f5` - 刷新任务列表
-- `q` - 退出程序
-
-### 任务详情
-
-- `e` - 编辑任务
-- `d` - 删除任务
-- `r` - 运行任务
-- `s` - 停止任务
-- `Esc` - 返回任务列表
-
-### 任务编辑
-
-- `Tab` - 下一个字段
-- `Shift+Tab` - 上一个字段
-- `Ctrl+s` - 保存任务
-- `Esc` - 取消编辑
 
 ## Lua 脚本示例
 
@@ -132,8 +98,6 @@ Lua 脚本默认存储在以下位置：
 
 - [github.com/yuin/gopher-lua](https://github.com/yuin/gopher-lua) - Go 语言的 Lua 解释器
 - [github.com/mattn/go-sqlite3](https://github.com/mattn/go-sqlite3) - SQLite 数据库驱动
-- [github.com/charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) - 终端 UI 框架
-- [github.com/charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss) - 终端样式库
 
 ## 许可证
 

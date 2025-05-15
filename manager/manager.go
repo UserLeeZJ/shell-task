@@ -1,4 +1,4 @@
-// cmd/shelltask/manager/manager.go
+// manager/manager.go
 package manager
 
 import (
@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/UserLeeZJ/shell-task/cmd/shelltask/lua"
-	"github.com/UserLeeZJ/shell-task/cmd/shelltask/storage"
+	"github.com/UserLeeZJ/shell-task/lua"
 	"github.com/UserLeeZJ/shell-task/scheduler"
+	"github.com/UserLeeZJ/shell-task/storage"
 )
 
 // TaskManager 任务管理器
