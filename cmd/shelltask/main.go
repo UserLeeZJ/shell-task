@@ -1,4 +1,4 @@
-// cmd/shelltask/shelltask.go
+// cmd/shelltask/main.go
 package main
 
 import (
